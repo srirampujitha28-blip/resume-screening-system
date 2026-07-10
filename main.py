@@ -1,49 +1,39 @@
 import os
-from resume_reader import read_resume
+from resume_reader import read_resume, extract_candidate_name
 from screening import calculate_match
 
 # Read job description
-with open("job_description.txt", "r") as file:
+job_desc_path = "job_description.txt"
+if not os.path.exists(job_desc_path):
+    print(f"Error: Job description file '{job_desc_path}' not found.")
+    exit(1)
+
+with open(job_desc_path, "r") as file:
     required_skills = file.readlines()
 
-# Read resume
+resumes_dir = "resumes"
+if not os.path.exists(resumes_dir):
+    print(f"Error: Resumes directory '{resumes_dir}' not found. Creating it...")
+    os.makedirs(resumes_dir)
 
-for file in os.listdir("resumes"):
-    if file.endswith(".pdf"):
-        print("\n" + "=" * 50)
-        print("Resume:", file)
-        print("=" * 50)
+# Scan resumes
+files_to_scan = [f for f in os.listdir(resumes_dir) if f.endswith((".pdf", ".docx"))]
 
-        resume_text = read_resume(f"resumes/{file}")
+if not files_to_scan:
+    print(f"No PDF or DOCX resumes found in '{resumes_dir}' folder.")
+else:
+    print(f"Found {len(files_to_scan)} resume(s) in '{resumes_dir}'. Starting screening...")
+    
+    for filename in files_to_scan:
+        print("\n" + "=" * 60)
+        print("Resume File:", filename)
+        print("=" * 60)
 
-        percentage, matched, missing = calculate_match(
-            resume_text,
-            required_skills
-        )
-
-        print(f"Match Percentage: {percentage:.2f}%")
-
-        print("\nMatched Skills:")
-        for skill in matched:
-            print("-", skill)
-
-        print("\nMissing Skills:")
-        for skill in missing:
-            print("-", skill)
-
-        if percentage >= 70:
-            print("\nStatus: SELECTED")
-        else:
-            print("\nStatus: REJECTED")
-# Calculate match
-
-for file in os.listdir("resumes"):
-    if file.endswith(".pdf"):
-        print("\n" + "=" * 50)
-        print("Resume:", file)
-        print("=" * 50)
-
-        resume_text = read_resume(f"resumes/{file}")
+        file_path = os.path.join(resumes_dir, filename)
+        resume_text = read_resume(file_path)
+        
+        candidate_name = extract_candidate_name(resume_text)
+        print(f"Candidate Name: {candidate_name}")
 
         percentage, matched, missing = calculate_match(
             resume_text,
@@ -53,14 +43,23 @@ for file in os.listdir("resumes"):
         print(f"Match Percentage: {percentage:.2f}%")
 
         print("\nMatched Skills:")
-        for skill in matched:
-            print("-", skill)
+        if matched:
+            for skill in matched:
+                print("-", skill)
+        else:
+            print("(None)")
 
         print("\nMissing Skills:")
-        for skill in missing:
-            print("-", skill)
+        if missing:
+            for skill in missing:
+                print("-", skill)
+        else:
+            print("(None)")
 
         if percentage >= 70:
-            print("\nStatus: SELECTED")
+            print("\nStatus: SELECTED [Strong Match]")
+        elif percentage >= 40:
+            print("\nStatus: POTENTIAL FIT [Moderate Match]")
         else:
-            print("\nStatus: REJECTED")
+            print("\nStatus: REJECTED [Weak Match]")
+    print("\nScreening complete.")

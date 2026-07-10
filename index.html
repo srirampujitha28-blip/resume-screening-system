@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Resume Screening Dashboard</title>
+    <!-- Google Fonts: Outfit for Headings, Inter for Body Text -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Link to the CSS stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- PDF.js library via Cloudflare CDN for parsing PDF files in JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER SECTION -->
+        <header class="app-header">
+            <div class="logo-container">
+                <span class="logo-icon">📄</span>
+                <div>
+                    <h1>Resume Screening System</h1>
+                    <p class="subtitle">AI-powered skill matching and candidate suitability analysis</p>
+                </div>
+            </div>
+            <div class="header-badge">
+                <span class="pulse-dot"></span>
+                <span>Client-Side Engine Active</span>
+            </div>
+        </header>
+
+        <!-- MAIN CONTENT GRID -->
+        <main class="dashboard-grid">
+            
+            <!-- LEFT PANEL: INPUTS (Job Description & Resume Upload) -->
+            <section class="panel panel-inputs">
+                
+                <!-- 1. JOB DESCRIPTION CARD -->
+                <div class="card job-card">
+                    <div class="card-header">
+                        <span class="card-icon">💼</span>
+                        <h2>1. Job Description</h2>
+                    </div>
+                    <p class="card-desc">Paste the job description below. The system will automatically extract key required skills in real time.</p>
+                    
+                    <textarea 
+                        id="job-description-input" 
+                        placeholder="e.g., We are looking for a Senior Frontend Developer. The candidate must have experience in React, JavaScript, HTML, CSS, and Tailwind CSS. Familiarity with Git, AWS, and Agile practices is highly preferred..."
+                    >We are looking for a Software Engineer with skills in Python, SQL, Git, and Docker. Good communication is a plus.</textarea>
+
+                    <div class="skills-extraction-area">
+                        <div class="extraction-header">
+                            <h3>Required Skills Identified</h3>
+                            <button id="add-skill-btn" class="btn-text">+ Add Custom Skill</button>
+                        </div>
+                        
+                        <!-- Container for dynamic skill badges -->
+                        <div id="required-skills-badges" class="badges-container">
+                            <span class="badge-placeholder">Skills will automatically appear here once you type a job description...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. RESUME UPLOAD CARD -->
+                <div class="card upload-card">
+                    <div class="card-header">
+                        <span class="card-icon">📤</span>
+                        <h2>2. Upload Resume</h2>
+                    </div>
+                    <p class="card-desc">Upload the candidate's PDF resume to compare against the job description.</p>
+                    
+                    <!-- Drag and Drop Zone -->
+                    <div id="dropzone" class="dropzone">
+                        <input type="file" id="file-input" accept=".pdf" style="display: none;">
+                        <div class="dropzone-content">
+                            <!-- SVG Upload Icon -->
+                            <svg class="upload-svg" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            <p class="upload-text-main">Drag & drop resume PDF here</p>
+                            <p class="upload-text-sub">or <span class="browse-link">browse files</span> from your computer</p>
+                        </div>
+                    </div>
+
+                    <!-- Upload Progress and Status -->
+                    <div id="upload-status-card" class="upload-status-card hidden">
+                        <div class="status-info">
+                            <span id="file-name" class="file-name">resume.pdf</span>
+                            <span id="upload-percent" class="upload-percent">0%</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div id="progress-bar-fill" class="progress-bar-fill" style="width: 0%;"></div>
+                        </div>
+                        <p id="status-message" class="status-message">Extracting resume text...</p>
+                    </div>
+                </div>
+
+                <div class="actions-row">
+                    <button id="reset-btn" class="btn btn-secondary">Clear All</button>
+                    <button id="analyze-btn" class="btn btn-primary">Screen Resume</button>
+                </div>
+
+            </section>
+
+            <!-- RIGHT PANEL: SCREENING RESULTS -->
+            <section class="panel panel-results">
+                
+                <!-- DEFAULT EMPTY STATE -->
+                <div id="results-empty-state" class="results-empty-state">
+                    <div class="empty-state-content">
+                        <span class="empty-icon">📊</span>
+                        <h3>Screening Results Dashboard</h3>
+                        <p>Complete the inputs on the left (Job Description & Resume PDF) and click "Screen Resume" to view the matching percentage, skill analysis, and final recommendation.</p>
+                    </div>
+                </div>
+
+                <!-- ACTIVE RESULTS DASHBOARD (Hidden until analysis is run) -->
+                <div id="results-dashboard" class="results-dashboard hidden">
+                    
+                    <!-- 1. MATCH SCORE CARD -->
+                    <div class="card result-card score-card">
+                        <div class="score-card-layout">
+                            <!-- Circular Progress Indicator -->
+                            <div class="progress-ring-container">
+                                <svg class="progress-ring" width="160" height="160">
+                                    <circle class="progress-ring-circle-bg" stroke="#1e293b" stroke-width="12" fill="transparent" r="70" cx="80" cy="80" />
+                                    <circle id="progress-ring-circle" class="progress-ring-circle-fill" stroke="url(#gradient-teal)" stroke-width="12" fill="transparent" r="70" cx="80" cy="80" />
+                                    <defs>
+                                        <linearGradient id="gradient-teal" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#06b6d4" />
+                                            <stop offset="100%" stop-color="#3b82f6" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="progress-ring-text">
+                                    <span id="score-number" class="score-number">0%</span>
+                                    <span class="score-label">MATCH SCORE</span>
+                                </div>
+                            </div>
+
+                            <!-- Score details -->
+                            <div class="score-details">
+                                <div class="detail-row">
+                                    <span class="detail-label">Status</span>
+                                    <span id="match-status-badge" class="badge-status">UNDER REVIEW</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Matched Skills</span>
+                                    <span id="matched-skills-count" class="count-value">0 / 0</span>
+                                </div>
+                                <div class="detail-row">
+                                    <span class="detail-label">Candidate Name</span>
+                                    <span id="detected-candidate-name" class="count-value">Unknown</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. RECOMMENDATION CARD -->
+                    <div class="card result-card recommendation-card">
+                        <div class="card-header">
+                            <span class="card-icon">💡</span>
+                            <h2>Screening Recommendation</h2>
+                        </div>
+                        <div id="recommendation-content" class="recommendation-content">
+                            <!-- Populated via Javascript -->
+                        </div>
+                    </div>
+
+                    <!-- 3. SKILL COMPARISON CARD -->
+                    <div class="card result-card skills-comparison-card">
+                        <div class="card-header">
+                            <span class="card-icon">⚡</span>
+                            <h2>Detailed Skill Analysis</h2>
+                        </div>
+                        
+                        <div class="skills-columns">
+                            <!-- Matched Skills Column -->
+                            <div class="skills-col">
+                                <h3 class="col-title matched-title">
+                                    <span class="col-icon">✅</span> Matched Skills
+                                </h3>
+                                <div id="matched-skills-list" class="badges-container-results">
+                                    <!-- Populated via Javascript -->
+                                </div>
+                            </div>
+                            
+                            <!-- Missing Skills Column -->
+                            <div class="skills-col">
+                                <h3 class="col-title missing-title">
+                                    <span class="col-icon">❌</span> Missing Skills
+                                </h3>
+                                <div id="missing-skills-list" class="badges-container-results">
+                                    <!-- Populated via Javascript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. COLLAPSIBLE RESUME TEXT PREVIEW -->
+                    <div class="card result-card text-preview-card">
+                        <button id="toggle-preview-btn" class="toggle-preview-btn">
+                            <span class="btn-title">🔍 Extracted Resume Text (Verification)</span>
+                            <span id="toggle-preview-arrow" class="arrow-icon">▼</span>
+                        </button>
+                        <div id="resume-text-preview" class="resume-text-preview hidden">
+                            <pre id="raw-text-content"></pre>
+                        </div>
+                    </div>
+
+                </div>
+
+            </section>
+        </main>
+        
+        <footer class="app-footer">
+            <p>Resume Screening System &copy; 2026. Made with HTML, CSS, and vanilla JS. Powered client-side with PDF.js.</p>
+        </footer>
+    </div>
+
+    <!-- Modal for adding custom skills -->
+    <div id="custom-skill-modal" class="modal hidden">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <h3>Add Custom Required Skill</h3>
+            <p>Specify a skill that should be matched. This will be added to the job requirements.</p>
+            <input type="text" id="custom-skill-input" placeholder="e.g. Docker, PyTorch, French">
+            <div class="modal-actions">
+                <button id="modal-cancel-btn" class="btn btn-secondary btn-sm">Cancel</button>
+                <button id="modal-submit-btn" class="btn btn-primary btn-sm">Add Skill</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to the main Javascript logic file -->
+    <script src="app.js"></script>
+</body>
+</html>

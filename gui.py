@@ -2,7 +2,7 @@ from save_results import save_result
 import tkinter as tk
 from tkinter import filedialog
 
-from resume_reader import read_resume
+from resume_reader import read_resume, extract_candidate_name
 from screening import calculate_match
 
 # Read Job Description
@@ -13,7 +13,12 @@ with open("job_description.txt", "r") as file:
 def upload_resume():
     file_path = filedialog.askopenfilename(
         title="Select Resume",
-        filetypes=[("PDF Files", "*.pdf")]
+        filetypes=[
+            ("Supported Files", ("*.pdf", "*.docx")),
+            ("PDF Files", "*.pdf"),
+            ("Word Files", "*.docx"),
+            ("All Files", "*.*")
+        ]
     )
 
     if file_path:
@@ -27,12 +32,7 @@ def upload_resume():
         print(resume_text)
 
         # Candidate Name
-        candidate_name = "Unknown"
-
-        for line in resume_text.split("\n"):
-            if "Name" in line:
-                candidate_name = line.replace("Name:", "").strip()
-                break
+        candidate_name = extract_candidate_name(resume_text)
 
         print("Step 3: Calculating Match")
 
