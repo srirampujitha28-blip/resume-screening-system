@@ -12,6 +12,8 @@ To cater to different developer and business needs, this project comes built wit
 4. **Command Line Interface (CLI)** (Batch processing engine for fast scanning of resumes)
 
 ---
+## Live demo
+https://srirampujitha28-blip-resume-screening-system-app-wkq1vt.streamlit.app/
 
 ## 🌟 Key Features
 
