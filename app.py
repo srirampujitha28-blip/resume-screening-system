@@ -7,7 +7,7 @@ from screening import calculate_match
 # Page Title
 st.set_page_config(page_title="Resume Screening System")
 
-st.title("📄 AI Resume Screening System")
+st.title("📄  Resume Screening System")
 
 st.write("Upload a resume and check the match percentage.")
 
